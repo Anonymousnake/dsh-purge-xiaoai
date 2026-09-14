@@ -7,7 +7,7 @@
 <p align="center"><strong>Version 1.3.6</strong></p>
 
 <p align="center">
-  <em>DeepSeek Harness 破甲：让所有模型都能破甲，不同模型可换不同提示词。默认提示词面向国模「小码酱」。求 Star 收藏 ⭐</em>
+  <em>DeepSeek Harness 破甲：让所有模型都能破甲，不同模型可换不同提示词。默认提示词面向国模「小爱同学」。求 Star 收藏 ⭐</em>
 </p>
 
 <p align="center">
@@ -495,7 +495,7 @@ prompt-inject.md 有内容? ──是──> 原样写入 dsh-purge systemPrompt
            └─> 不写入覆盖段
 ```
 
-**身份（1.3.6）：** 插件不发明「操作员 / LCS」第二套人设。官方 Harness 身份句剥掉；`prompt-inject.md` 原文就是身份。0.1.5 把 inject 折进 `persona-prefix`，避免被梁神 phase-1 滤掉。
+**身份（1.3.6）：** 插件不发明「操作员 / 小爱同学」第二套人设。官方 Harness 身份句剥掉；`prompt-inject.md` 原文就是身份。0.1.5 把 inject 折进 `persona-prefix`，避免被梁神 phase-1 滤掉。
 
 **Windows CMD 无感：** Node 24 上 `import { spawn } from "node:child_process"` 不是 live binding。`registerHooks` 把 `node:child_process` 指到带 `windowsHide` 的 facade，并直接给 `@deepseek-ai/dsh-subprocess-local` 加 `windowsHide: true`。doctor 重启走 `node + bin.js`，不写 noop `supervisor.cmd`。
 

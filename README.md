@@ -7,7 +7,7 @@
 <p align="center"><strong>Version 1.3.6</strong></p>
 
 <p align="center">
-    <em>DeepSeek Harness jailbreak (破甲): every model can jailbreak; swap prompts per model. Default prompt for Chinese models — 小码酱. Please star ⭐</em>
+    <em>DeepSeek Harness jailbreak (破甲): every model can jailbreak; swap prompts per model. Default prompt for Chinese models — 小爱同学. Please star ⭐</em>
 </p>
 
 <p align="center">
@@ -491,7 +491,7 @@ prompt-inject.md has content? ──yes──> write it verbatim as the dsh-purg
            └─> no override section
 ```
 
-**Identity (1.3.6):** the plugin does not invent an “operator / LCS” second persona. Official Harness identity lines are stripped; `prompt-inject.md` is the identity. On 0.1.5 the inject is folded into `persona-prefix` so liangshen phase-1 cannot drop it.
+**Identity (1.3.6):** the plugin does not invent an “operator / 小爱同学” second persona. Official Harness identity lines are stripped; `prompt-inject.md` is the identity. On 0.1.5 the inject is folded into `persona-prefix` so liangshen phase-1 cannot drop it.
 
 **Windows CMD silence:** on Node 24, `import { spawn } from "node:child_process"` is not a live binding. `registerHooks` redirects `node:child_process` to a `windowsHide` facade; `@deepseek-ai/dsh-subprocess-local` also gets `windowsHide: true`. Doctor relaunch uses `node + bin.js` and does not leave a noop `supervisor.cmd`.
 
