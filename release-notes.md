@@ -1,3 +1,29 @@
+# 1.1.77
+
+## 中文
+
+- 版本 **1.1.77**（仅工作区，未提交）。
+- 把剩余 4 条清洗项适配到 DSH 0.2.1 源码：
+  - **#32 WEB_SURFACE_IDENTITY_NEUTRAL**：身份句从 `dsh-web-app/lib/index.js` 搬到 `dsh-harness-dev-context/lib/index.js` 的 `WEB_SURFACE_PROMPT`；新增目标键 `harness-dev-context` 与新 pattern，同时覆盖 web-app 里改成 `Advertised URL of …` 的 runtime 变量描述。
+  - **#53 WEB_SURFACE_PROHIBITION**：同一句「Do not start a replacement server…」在 0.2.1 与 `LEGACY_WEB_SURFACE`（旧会话匹配用，不能动）并存，改成锚定 `WEB_SURFACE_PROMPT` 结尾的反引号分号，只删现行提示词那一处，并留下 `[dsh-purge] web surface prohibition dropped` 标记；无锚定的旧 pattern 移除（0.2.0 已退役）。
+  - **#77 REWIND_DROP_SENT_ON_APPEND**：0.2.1 的 `append()` 把 `this.revised.clear()` 改成 `if (this.revised.size > 0) …`，旧 pattern 打不中；新增带守卫的变体。
+  - **#80 MINIMAL_OFFICIAL_TOOLSET**：0.2.1 的极简预设里已没有 parity 追加的 fs/web 段，改为给官方 `tool-fs` 行补 `# [dsh-purge] minimal official toolset` 标记（不改行为，只让状态可判断）。
+  - **#71 LIANGSHEN_IDENTITY_LINE**：标 `optional`，未安装 liangshen 预设时按 `na` 跳过，不再报 `missing_file`。
+- 结果：0.2.1-rc.2 上 `patchStatus` 的 non-applied 为空，面板不会再出现「部分清洗不生效」。
+- 验证：四条补丁先离线干跑（JS 产物 `node --check`、YAML 与原件同解析、legacy 字符串未被动），再落到实机；实机三个 JS 文件语法通过、两个 YAML 可解析。
+
+## English
+
+- **1.1.77** (working tree only, not committed).
+- Adapt the remaining four cleaning patches to the DSH 0.2.1 sources:
+  - **#32**: the identity sentence moved from `dsh-web-app/lib/index.js` into `dsh-harness-dev-context/lib/index.js` (`WEB_SURFACE_PROMPT`); added the `harness-dev-context` target key and new patterns, and covered the renamed `Advertised URL of …` runtime variable description.
+  - **#53**: the "Do not start a replacement server…" sentence now coexists with `LEGACY_WEB_SURFACE` (frozen for old-session matching); the pattern is anchored to the closing backtick of `WEB_SURFACE_PROMPT` so only the live prompt loses it, leaving a `[dsh-purge] web surface prohibition dropped` marker. The unanchored legacy pattern is gone.
+  - **#77**: 0.2.1 guards the `revised` clear (`if (this.revised.size > 0) …`), so the old pattern missed; added the guarded variant.
+  - **#80**: the 0.2.1 minimal presets no longer carry the parity fs/web rows; the patch now only annotates the official `tool-fs` row with `# [dsh-purge] minimal official toolset` (no behaviour change, just a detectable marker).
+  - **#71**: marked `optional`, so a missing liangshen preset reports `na` instead of `missing_file`.
+- Result: on 0.2.1-rc.2 `patchStatus` has no non-applied rows, so the panel no longer reports partial cleaning.
+- Verification: dry-run first (JS output `node --check`, YAML parsed like the originals, legacy strings untouched), then applied live; the three live JS files parse and both YAML files load.
+
 # 1.1.76
 
 ## 中文
