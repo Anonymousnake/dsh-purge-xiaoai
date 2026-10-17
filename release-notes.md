@@ -1,3 +1,21 @@
+# 1.1.72
+
+## 中文
+
+- 版本 **1.1.72**（fork 构建）。上游暂停维护，本 fork 继续出补丁。
+- 修复官方桌面更新「重启后版本不变」：更新助手 `wscript.exe` 继承了应用的工作目录（安装目录），安装器把安装目录改名为 `*.old-{GUID}` 时被判占用（`MoveFileExW` → Windows 错误 32，见 `installer-logs\directory-failure-*.log`），重试 10 次后放弃；助手回滚并把旧版重新拉起。
+- `lib/official-update.wscript` 动手前先把自身工作目录切到 `%TEMP%`（`leaveInstallDir()`），并在日志写下 `cwd ...`，便于和安装器日志对照。
+- #45 注入的 `spawn("cmd.exe", ...)` 显式带 `cwd: %TEMP%`；回退到官方 `quitAndInstall` 前先 `process.chdir(%TEMP%)`，官方路径同样不会被应用自己的工作目录锁死。
+- 安装源改指本 fork：`dsh.install.tarball` / `zip` / `git`、README 一键安装链接与 clone / tarball 说明均走 `null0xfff/dsh-purge`。
+
+## English
+
+- **1.1.72** (fork build). Upstream is paused; patches continue here.
+- Fix the official desktop update that "restarts and still reports the old version": the update helper `wscript.exe` inherited the app's working directory (the install directory), so the installer's rename of the install directory to `*.old-{GUID}` was refused (`MoveFileExW` → Windows error 32, see `installer-logs\directory-failure-*.log`); after ten attempts it gave up and the helper rolled back and restarted the old build.
+- `lib/official-update.wscript` now moves its own working directory to `%TEMP%` before doing anything else (`leaveInstallDir()`) and logs `cwd ...`, so helper and installer logs can be compared.
+- The `spawn("cmd.exe", ...)` injected by #45 passes `cwd: %TEMP%`; the `quitAndInstall` fallback runs `process.chdir(%TEMP%)` first, so the official path is not blocked by the app's own working directory either.
+- Install sources point at this fork: `dsh.install.tarball` / `zip` / `git`, the README one-click install link, and the clone / tarball instructions.
+
 # 1.1.71
 
 ## 中文

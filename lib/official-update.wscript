@@ -8,6 +8,19 @@ var logPath = __LOG_JSON__;
 var fso = new ActiveXObject('Scripting.FileSystemObject');
 var sh = new ActiveXObject('WScript.Shell');
 var wmi = GetObject('winmgmts:\\\\.\\root\\cimv2');
+// The installer renames the install directory to <name>.old-{GUID}. Windows refuses that
+// rename while any process still has the directory as its current directory
+// (ERROR_SHARING_VIOLATION / 32), and this helper used to inherit exactly that current
+// directory from the app. Leave it before touching anything, so the installer is unblocked
+// even if a long-lived process below would otherwise hold it.
+function leaveInstallDir() {
+  var d = '';
+  try { d = String(fso.GetSpecialFolder(2).Path || ''); } catch (e1) {}
+  if (!d) { try { d = String(sh.ExpandEnvironmentStrings('%TEMP%') || ''); } catch (e2) {} }
+  if (!d || d.indexOf('%') >= 0 || d.length < 4) d = 'C:\\Windows\\Temp';
+  try { sh.CurrentDirectory = d; } catch (e3) { return 'failed'; }
+  return d;
+}
 function z(n) { return (n < 10 ? '0' : '') + n; }
 function stamp() { var d = new Date(); return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + 'T' + z(d.getHours()) + ':' + z(d.getMinutes()) + ':' + z(d.getSeconds()); }
 function log(m) { var f = fso.OpenTextFile(logPath, 8, true); f.WriteLine(stamp() + ' ' + m); f.Close(); }
@@ -16,6 +29,7 @@ function pids() { var out = []; var e = new Enumerator(wmi.ExecQuery("SELECT Pro
 function fileSize(fp) { if (!fso.FileExists(fp)) return -1; return fso.GetFile(fp).Size; }
 function fileStamp(fp) { if (!fso.FileExists(fp)) return ''; return String(fso.GetFile(fp).DateLastModified); }
 log('update-begin');
+log('cwd ' + leaveInstallDir());
 WScript.Sleep(800);
 var list = pids();
 log('pids ' + list.join(','));
