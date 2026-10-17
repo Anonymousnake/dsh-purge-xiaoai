@@ -1,3 +1,17 @@
+# 1.1.74
+
+## 中文
+
+- 版本 **1.1.74**。
+- 修复 DSH 0.2.1 下每轮运行直接失败：`unknown prompt variable "{{cwd}}" in section "deployment:persona-suffix"; registered variables: provider, model`。DSH 0.2.1 起提示词变量只由 `dsh-agent-loop` 注册 `provider` / `model`，旧的 `{{cwd}}` 已不存在；本插件的 bundle 补丁把 `system-prompt.personaSuffix` 设成 `Your working directory is {{cwd}}.`，导致提示词装配必抛错、整轮失败。现在 `personaSuffix` 置空——工作目录本来就在 DSH 的 runtime context（`Current working directory: …`）里，不必再拼一份。
+- 已知遗留：补丁表仍按 `dshTarget: 0.2.0-rc.2` 编写。在 0.2.1-rc.2 上 82 条补丁里 5 条因源码漂移被跳过（#32 / #40 / #53 / #77 / #80），#71 是未安装的 liangshen 预设（`missing_file`），所以面板会显示「部分清洗不生效」。主流程不受影响；要完全对齐 0.2.1 需要逐条更新 pattern。
+
+## English
+
+- **1.1.74**.
+- Fix every turn failing on DSH 0.2.1 with `unknown prompt variable "{{cwd}}" in section "deployment:persona-suffix"; registered variables: provider, model`. Since 0.2.1 only `dsh-agent-loop` registers prompt variables (`provider`, `model`) and the old `{{cwd}}` is gone; this plugin's bundle patch set `system-prompt.personaSuffix` to `Your working directory is {{cwd}}.`, so prompt assembly always threw and the whole turn failed. `personaSuffix` is now empty - the working directory already comes from DSH's runtime context (`Current working directory: ...`).
+- Known leftover: the patch table still targets `dshTarget: 0.2.0-rc.2`. On 0.2.1-rc.2 five of 82 patches are skipped because their source patterns drifted (#32 / #40 / #53 / #77 / #80), and #71 targets an uninstalled liangshen preset (`missing_file`), so the panel reports "part of the cleaning did not take effect". The main flow is unaffected; full alignment needs per-pattern updates.
+
 # 1.1.73
 
 ## 中文

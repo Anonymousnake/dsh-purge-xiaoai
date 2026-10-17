@@ -28,7 +28,11 @@
   config:
     includeHarnessIdentity: false
     personaPrefix: ""
-    personaSuffix: Your working directory is {{cwd}}.
+    # DSH >= 0.2.1 only registers the prompt variables "provider" and "model"; the old
+    # {{cwd}} variable is gone, and any unknown variable aborts prompt assembly with
+    # "unknown prompt variable". The working directory is already supplied by the runtime
+    # context, so keep this suffix empty instead of templating {{cwd}}.
+    personaSuffix: ""
 
 - id: dsh-purge
   inject: [systemPrompt, tools]
