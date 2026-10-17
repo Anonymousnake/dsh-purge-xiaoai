@@ -1,3 +1,23 @@
+# 1.1.73
+
+## 中文
+
+- 版本 **1.1.73**。
+- 修复「更新装完后 `resources\runtime` 整个消失、客户端启动即崩（`ENOENT …resources\runtime\office-skills\office\SKILL.md`）」：解包布局下 `resources\app\runtime` 是指向安装目录里 `resources\runtime` 的 junction（Node 把 junction 目标规范成绝对路径），旧逻辑把 `resources\app` 挪成 `resources\app.dshpurge-prev` 时它仍留在安装目录内；安装器把旧目录改名成 `*.old-{GUID}` 备份、解包新文件、再递归删除备份时，删除跟着这个 junction 走进了**刚装好的新 runtime**，6,150 个文件被清空。
+- 更新助手改为把 `resources\app` 挪到**安装目录之外**的 `%TEMP%\dsh-purge-app-stash-<时间戳>`（仅同卷直接 rename；跨卷或失败时回退旧的原地改名），安装成功后再丢掉。
+- 所有带 reparse point 的目录只用 reparse-safe 方式删除：`Scripting.FileSystemObject` 的递归删除会跟随 junction（实测会把目标清空），改用 `node fs.rmSync(recursive)`，只解链不跟随。
+- 安装后自检 `resources\runtime`：缺失时日志写 `runtime MISSING` 并落 `resources\dsh-purge-runtime-missing` 标记（修好后自动清除），不再静默拉起一个起不来的版本。
+- 旧的「重建 app 目录后清理」分支里的 `fso.DeleteFolder(…, true)` 一并换成同一套安全删除。
+
+## English
+
+- **1.1.73**.
+- Fix the post-update startup crash where `resources\runtime` vanished entirely (`ENOENT …resources\runtime\office-skills\office\SKILL.md`): in the unpacked layout `resources\app\runtime` is a junction to `resources\runtime`, an absolute path inside the install directory. The helper used to move the patched dir to `resources\app.dshpurge-prev` - still inside the install directory - so when the installer backed up the old tree as `*.old-{GUID}`, extracted the new files and then deleted that backup recursively, the delete followed the junction into the **freshly installed** runtime and emptied all 6,150 files.
+- The helper now moves `resources\app` to `%TEMP%\dsh-purge-app-stash-<timestamp>`, outside the install directory (same-volume rename only; falls back to the in-tree name otherwise), and drops it after a successful install.
+- Trees that contain reparse points are only ever deleted reparse-safely: `Scripting.FileSystemObject` follows junctions (verified: it empties the target), so the helper uses `node fs.rmSync(recursive)`, which unlinks links instead.
+- Post-install self-check on `resources\runtime`: logs `runtime MISSING` and drops a `resources\dsh-purge-runtime-missing` marker when absent (cleared once repaired), instead of silently starting a build that cannot start.
+- The old "clear recreated app dir" branches use the same safe delete.
+
 # 1.1.72
 
 ## 中文
