@@ -1,3 +1,35 @@
+# 1.1.78
+
+## 中文
+
+- 版本 **1.1.78**（仅工作区，未提交）。
+- 兼容 `dsh-degeneration-watchdog` 0.8.1 的 rescue（对应 watchdog#1）：DSH 的 `turn/end` reason 是 `{ kind: "aborted", reason: { kind: "parent" | "disposed" | "hook" } }`，而 `isUserAbort` 只把 `"user"` 当作「人不该续跑」，于是 watchdog 的 `agent.cancel({ kind: "parent" })` 被本插件判成异常中断，280ms 后注入「继续」，抢在 compaction 前拆散整条 cancel→compact→followup 救援链。
+- 新增 `isPluginAbort(reason)`，在 `shouldAutoContinue` 里排除插件发起的 cancel（`parent` / `disposed` / `hook`）；`error` / `interrupted` / `max-tokens` 等真实异常仍照旧自动续跑。
+- 单测（11 个 reason 形状）全过：watchdog parent、agent disposed、hook、user、legacy user 字符串、无 cause 的普通中断、TRANSPORT 错误、UNKNOWN 错误、interrupted、max-tokens、completed。
+- 与 watchdog 的关系：watchdog 0.8.1 CHANGELOG 明确要求第三方 auto-continue 插件「排除插件发起的中断（如 parent）」；本补丁即该建议的实现。开启 `autoContinue` 与 watchdog 的 `autoAbort`/`autoCompact` 可共存——watchdog 负责退化救援，purge 只在非插件发起的异常中断上续跑。
+- 本机实测：`autoContinue` 置为 `true` 后重启，复读子会话触发 watchdog `ngram-collapse` → `cancel issued` → `compacted`（1052 tokens）；全量会话缓存里 `dsh-purge-continue` 命中 0（同一判定在修复前为 true、会注入），证明救援窗口内 purge 不再抢跑。子会话被回收后 watchdog 的 followup 未执行，属子会话生命周期，与 purge 无关。
+- **UI 补全（本次一并做）**：
+  - 补上客户端一直在调、服务端却缺失的两个路由：`GET/POST /dsh-purge/continue`（重试/继续面板的轮询与手动「继续」）与 `GET/POST /dsh-purge/continue/settings`（失败重试/继续设置）。此前两处 404，`ContinueRetrySection` 拿不到配置直接 `return null`，整块 UI 不可见。
+  - `ContinueRetrySection` 之前被注释掉（`// h(ContinueRetrySection, null)`），现已挂回；保存走 `continueRetry.saveSettings()` 原子落盘并就地更新内存快照，保存即生效、无需重启。
+  - 新增「运行配置」面板，把此前只能改 `cordis.patch.yml` 的开关放出来：`enabled`、`stripMnemon`、`capabilityProtocol`、`verbose`、`autoApplyOnStart`、`autoUpdateOnStart`、`postPrompt`、`postPromptOrder`；落盘到 `$DSH_HOME/dsh-purge/ui-config.json`，启动时覆盖 DEFAULTS / profile patch，面板内标注了需重启生效的项。`injectOnce` / `autoRevertOnMissing` 在当前版本代码里没有任何读取点（死键），刻意不放进面板，避免"点了没反应"。
+  - 新增 `GET/POST /dsh-purge/config` 与 `readUiConfig` / `writeUiConfig` / `sanitizeUiConfig` 白名单（仅收上述键与类型），避免 UI 误写脏配置。
+  - 验证：`node --check` 覆盖 `lib/index.js`、`lib/continue-retry.js`、`client.js` 全过；`saveSettings` 往返、手动续跑配额（第 3 次拒绝、`force` 仍受配额）、`continueUsed` 计数均通过。
+
+## English
+
+- **1.1.78** (working tree only, not committed).
+- Compatible with `dsh-degeneration-watchdog` 0.8.1 rescue (watchdog#1): DSH writes `turn/end` reason as `{ kind: "aborted", reason: { kind: "parent" | "disposed" | "hook" } }`, while `isUserAbort` only treats `"user"` as "do not continue". The watchdog's `agent.cancel({ kind: "parent" })` was therefore seen as an abnormal end and dsh-purge injected "continue" after 280 ms, splicing into the cancel→compact→followup rescue chain before compaction finished.
+- Added `isPluginAbort(reason)` and excluded plugin-initiated cancels (`parent` / `disposed` / `hook`) in `shouldAutoContinue`; genuine failures (`error` / `interrupted` / `max-tokens`) still auto-continue as before.
+- Unit check across 11 reason shapes passes: watchdog parent, agent disposed, hook, user, legacy user string, plain abort without cause, TRANSPORT error, UNKNOWN error, interrupted, max-tokens, completed.
+- Relation to the watchdog: its 0.8.1 CHANGELOG explicitly asks third-party auto-continue plugins to "exclude plugin-initiated cancels (e.g. the `parent` kind)"; this patch implements that. `autoContinue` may now coexist with `autoAbort`/`autoCompact`: the watchdog owns degeneration rescue, dsh-purge only continues on non-plugin abnormal ends.
+- Live check on this machine: with `autoContinue=true` after a restart, a deliberately repetitive sub-agent tripped the watchdog (`ngram-collapse` → `cancel issued` → `compacted`, 1052 tokens) while every session cache showed **zero** `dsh-purge-continue` messages (the pre-fix predicate evaluates to true for the same reason), so dsh-purge no longer races the rescue window. The watchdog's own follow-up was skipped because the child agent was disposed, which is sub-agent lifecycle, not dsh-purge.
+- **UI completeness (in this release)**:
+  - Added the two routes the client already called but the server never served: `GET/POST /dsh-purge/continue` (polling plus the manual "Continue" button) and `GET/POST /dsh-purge/continue/settings` (retry/continue settings). Both returned 404 before, and `ContinueRetrySection` bailed out with `return null`, hiding the whole panel.
+  - `ContinueRetrySection` was commented out (`// h(ContinueRetrySection, null)`); it is mounted again. Saves go through `continueRetry.saveSettings()` (atomic write) and update the in-memory snapshot, so changes apply without a restart.
+  - New "Runtime config" panel exposes switches that previously required editing `cordis.patch.yml`: `enabled`, `stripMnemon`, `capabilityProtocol`, `verbose`, `autoApplyOnStart`, `autoUpdateOnStart`, `postPrompt`, `postPromptOrder`. Persisted to `$DSH_HOME/dsh-purge/ui-config.json`, merged over DEFAULTS / profile patch at boot, with restart-only keys labelled in the panel. `injectOnce` / `autoRevertOnMissing` have no readers in this version, so they are deliberately left out instead of shipping dead toggles.
+  - Added `GET/POST /dsh-purge/config` plus `readUiConfig` / `writeUiConfig` / `sanitizeUiConfig` allow-lists (keys and types only), so the UI cannot write arbitrary config.
+  - Verification: `node --check` passes for `lib/index.js`, `lib/continue-retry.js` and `client.js`; `saveSettings` round-trip, manual-continue quota (third call rejected, `force` still bounded), and `continueUsed` counters all behave as expected.
+
 # 1.1.77
 
 ## 中文

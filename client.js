@@ -463,6 +463,18 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"continue.ready": "继续（还可 {left} 次）",
 			"continue.limit": "已达继续上限",
 			"continue.fail": "继续失败: {error}",
+			"saved.config": "已保存",
+			"config.title": "运行配置",
+			"config.hint": "插件运行开关，改动会写入 ui-config.json；启用状态、启动时行为与 postPrompt 位置需重启后生效。",
+			"config.enabled": "启用插件",
+			"config.stripMnemon": "剥离 mnemon 提示",
+			"config.capabilityProtocol": "能力协议段",
+			"config.verbose": "详细日志",
+			"config.autoApplyOnStart": "启动时自动应用补丁",
+			"config.autoUpdateOnStart": "启动时自动检查更新",
+			"config.postPrompt": "追加提示词（postPrompt）",
+			"config.postPromptOrder": "追加段顺序",
+			"config.restartHint": "提示：启用状态、启动时自动应用/更新、缺标记自动还原、postPrompt 段位置需重启后生效；其余开关即时生效。",
 		};
 
 		const en = {
@@ -803,6 +815,18 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"continue.ready": "Continue ({left} left)",
 			"continue.limit": "Continue limit reached",
 			"continue.fail": "Continue failed: {error}",
+			"saved.config": "Saved",
+			"config.title": "Runtime config",
+			"config.hint": "Plugin runtime switches; changes persist to ui-config.json. Enabled state, start-up actions and the postPrompt position need a restart.",
+			"config.enabled": "Plugin enabled",
+			"config.stripMnemon": "Strip mnemon notices",
+			"config.capabilityProtocol": "Capability protocol section",
+			"config.verbose": "Verbose log",
+			"config.autoApplyOnStart": "Auto-apply patches on start",
+			"config.autoUpdateOnStart": "Check updates on start",
+			"config.postPrompt": "Extra prompt (postPrompt)",
+			"config.postPromptOrder": "Extra section order",
+			"config.restartHint": "Note: enabled state, start-up auto apply/update, auto revert and the postPrompt position take effect after a restart; the other switches apply immediately.",
 		};
 
 		const PURGE_CSS = `
@@ -1334,6 +1358,83 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 						}),
 					),
 				),
+			);
+		}
+
+		function RuntimeConfigSection() {
+			const t = useT();
+			const [cfg, setCfg] = useState(null);
+			const [notice, setNotice] = useState({ kind: "idle", text: "" });
+			const [busy, setBusy] = useState(false);
+			useEffect(() => {
+				apiJson("/dsh-purge/config")
+					.then((d) => { if (d && d.ok) setCfg(d); })
+					.catch(() => {});
+			}, []);
+			const save = (patch) => {
+				if (!cfg || busy) return;
+				const next = { ...cfg, ...patch };
+				setCfg(next);
+				setBusy(true);
+				apiJson("/dsh-purge/config", {
+					method: "POST",
+					headers: { "content-type": "application/json" },
+					body: JSON.stringify(next),
+				})
+					.then((d) => {
+						if (d && d.ok) {
+							setCfg(d);
+							setNotice({ kind: "ok", text: t("saved.config") });
+						} else {
+							setNotice({ kind: "error", text: t("err.save", { error: (d && d.error) || "" }) });
+						}
+					})
+					.catch((e) => setNotice({ kind: "error", text: t("err.save", { error: e.message }) }))
+					.finally(() => setBusy(false));
+			};
+			if (!cfg) return null;
+			const row = (children) => h("div", { className: "dshp-cr-row" }, children);
+			const toggle = (key) => h("label", null,
+				h("input", {
+					type: "checkbox",
+					checked: Boolean(cfg[key]),
+					disabled: busy,
+					onChange: (e) => save({ [key]: e.target.checked }),
+				}),
+				t("config." + key),
+			);
+			return h("div", { className: "dshp-cr" },
+				h("div", { className: "dshp-sub" },
+					h("h4", null, t("config.title")),
+					noticeNode(notice),
+				),
+				h("p", { className: "dshp-hint", style: { margin: "0 0 4px", color: "var(--dshp-mute)", fontSize: 12 } }, t("config.hint")),
+				row([toggle("enabled"), toggle("stripMnemon")]),
+				row([toggle("capabilityProtocol"), toggle("verbose")]),
+				row([toggle("autoApplyOnStart"), toggle("autoUpdateOnStart")]),
+				h("label", { style: { display: "block", marginTop: 6 } },
+					t("config.postPrompt"),
+					h("textarea", {
+						className: "dshp-area",
+						style: { minHeight: 56, marginTop: 4 },
+						value: cfg.postPrompt || "",
+						disabled: busy,
+						spellCheck: false,
+						onChange: (e) => setCfg({ ...cfg, postPrompt: e.target.value }),
+						onBlur: (e) => save({ postPrompt: e.target.value }),
+					}),
+				),
+				row([h("label", null,
+					t("config.postPromptOrder"),
+					h("input", {
+						className: "dshp-field dshp-cr-num",
+						type: "number",
+						value: cfg.postPromptOrder,
+						disabled: busy,
+						onChange: (e) => save({ postPromptOrder: Number(e.target.value) }),
+					}),
+				)]),
+				h("p", { className: "dshp-hint", style: { margin: "4px 0 0", color: "var(--dshp-mute)", fontSize: 12 } }, t("config.restartHint")),
 			);
 		}
 
@@ -1982,7 +2083,8 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 						restartDsh(setNotice, function () {}, t, hostSurface);
 					},
 				}) : null,
-				// h(ContinueRetrySection, null),
+				h(ContinueRetrySection, null),
+				h(RuntimeConfigSection, null),
 				h("div", { className: "dshp-sub" },
 					h("h4", null, t("override.title")),
 					h("div", { className: "dshp-row", style: { margin: 0 } },
