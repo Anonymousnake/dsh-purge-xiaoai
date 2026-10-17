@@ -1,3 +1,21 @@
+# 1.1.76
+
+## 中文
+
+- 版本 **1.1.76**。
+- 修复 DSH 0.2.1 上面板「应用」永远判 incomplete、提示「CMD 无感未钉入（unknown）」：`#40 COMPLETE_PROMPT_KEEP_INJECT` 的 pattern 只匹配 0.1.5 / 0.2.0 的 `sections: ... : [completeSection]` + `contexts: []` 写法；0.2.1 的 `dsh-system-prompt` 改成先算 `requiredContexts`、再折叠 complete 段，pattern 打不中 → `hostCleanMarkersPresent` 恒为 false → `complete` 恒为 false。客户端在「没有 failed、也没 `cmd_flash.ok === false`」时没有可展示的原因，就兜底写了 unknown。
+- 新增 0.2.1 专用 replacement：保留 `requiredContexts` 逻辑，把 `dsh-purge` 段拼回 complete 段之前，并留下 `[dsh-purge] complete prompt keeps waterfall inject` 标记。
+- 效果：0.2.1 上 #40 变 applied、`hostCleanMarkersPresent=true`、`complete=true`，面板恢复正常；complete 模式下注入也不会被官方完整段吞掉。
+- 说明：#32 / #53 / #77 / #80 仍因 0.2.1 源码漂移被跳过（soft，不影响 apply 结果），#71 因未装 liangshen 预设是 missing_file（同样 soft）。
+
+## English
+
+- **1.1.76**.
+- Fix the panel reporting `incomplete` forever on DSH 0.2.1 with "CMD silence not pinned (unknown)": the `#40 COMPLETE_PROMPT_KEEP_INJECT` patterns only matched the 0.1.5 / 0.2.0 shape (`sections: ... : [completeSection]` plus `contexts: []`). 0.2.1's `dsh-system-prompt` computes `requiredContexts` first and then collapses the complete section, so no pattern matched, `hostCleanMarkersPresent` stayed false and `complete` stayed false. With no `failed` items and `cmd_flash.ok !== false`, the client had nothing concrete to show and fell back to `unknown`.
+- Added a 0.2.1-specific replacement that keeps the `requiredContexts` logic, re-attaches the `dsh-purge` sections ahead of the complete section, and leaves the `[dsh-purge] complete prompt keeps waterfall inject` marker.
+- Result on 0.2.1: #40 becomes `applied`, `hostCleanMarkersPresent=true`, `complete=true`, and the panel reports success; injection also survives a complete prompt.
+- Note: #32 / #53 / #77 / #80 are still skipped due to 0.2.1 source drift (soft, does not affect the apply result) and #71 is `missing_file` because the liangshen preset is not installed (also soft).
+
 # 1.1.75
 
 ## 中文
