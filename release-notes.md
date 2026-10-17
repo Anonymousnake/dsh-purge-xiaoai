@@ -1,3 +1,23 @@
+# 1.1.75
+
+## 中文
+
+- 版本 **1.1.75**。
+- 修复 0.2.1 下仍然每轮失败：`unknown prompt variable "{{cwd}}" in section "deployment:persona-suffix"`。1.1.74 只改了 bundle 补丁里的 `personaSuffix`，但真正把 `{{cwd}}` 写回去的是**代码**：`lib/identity.js` 的 `CWD_ONLY_SUFFIX`（overlay 时整体替换 persona suffix）以及 `stripHarnessPersona` 里的两处 `"Working directory: {{cwd}}. "` 补写。
+- 现在改写 persona 段直接用**真实工作目录**：新增 `cwdOnlySuffix(cwd)`，cwd 从 session header 取，经 rewrite options 透传到 `overlayOfficialIdentity`；cwd 缺失时后缀为空，不再留变量。
+- `escapeDshInterpolation` 白名单从 `cwd/model/provider` 收紧为 `model/provider`（0.2.1 只注册这两个），正文里残留的 `{{cwd}}` 会被转义成 `{ {cwd}}`，不会整段抛错。
+- `stripHarnessPersona` 里两处「Working directory: {{cwd}}.」补写改为空——工作目录由 persona 后缀与运行时上下文提供。
+- 已知小瑕疵（不影响功能）：面板在 apply 返回 `complete=false` 但没有任何具体失败项时，会兜底显示「CMD 无感未钉入（unknown）」。这是 `client.js` 的显示兜底，下个版本再修。
+
+## English
+
+- **1.1.75**.
+- Fix the remaining per-turn failure on 0.2.1: `unknown prompt variable "{{cwd}}" in section "deployment:persona-suffix"`. 1.1.74 only changed `personaSuffix` in the bundle patch, but the real writer is **code**: `lib/identity.js`'s `CWD_ONLY_SUFFIX` (replaces the persona suffix wholesale during overlay) and the two `"Working directory: {{cwd}}. "` replacements inside `stripHarnessPersona`.
+- The rewrite now renders the **actual** working directory: new `cwdOnlySuffix(cwd)`, with cwd taken from the session header and passed through rewrite options into `overlayOfficialIdentity`; when cwd is absent the suffix is simply empty.
+- `escapeDshInterpolation` allow-list tightened from `cwd/model/provider` to `model/provider` (0.2.1 registers only those two); any leftover `{{cwd}}` is escaped to `{ {cwd}}` instead of aborting the whole prompt.
+- The two `Working directory: {{cwd}}.` inserts in `stripHarnessPersona` are gone - the working directory comes from the persona suffix and the runtime context.
+- Known cosmetic issue (no functional impact): when apply returns `complete=false` with no concrete failure items, the panel falls back to "CMD silence not pinned (unknown)". That is a display fallback in `client.js`; fix in a later release.
+
 # 1.1.74
 
 ## 中文
