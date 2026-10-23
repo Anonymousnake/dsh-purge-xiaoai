@@ -6,6 +6,9 @@ on:
       - master
       - beta
   pull_request:
+    branches:
+      - master
+      - beta
 
 permissions:
   contents: read
@@ -44,7 +47,8 @@ jobs:
       - name: Check for dead repository links
         run: |
           set +e
-          hits=$(grep -rIn --exclude-dir=.git 'github\.com/YuJunZhiXue' . | grep -v 'release-notes.md')
+          hits=$(grep -rIn --exclude-dir=.git --exclude-dir=.github \
+                   'github\.com/YuJunZhiXue' . | grep -v 'release-notes.md')
           if [ -n "$hits" ]; then
             echo "发现指向已删除仓库 YuJunZhiXue/dsh-purge 的链接："
             echo "$hits"
